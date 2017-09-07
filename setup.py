@@ -11,7 +11,6 @@ setup(
     description='Audit log app for Django',
     install_requires=[
         'Django>=1.8',
-        'django-jsonfield>=1.0.0',
     ],
     zip_safe=False
 )
