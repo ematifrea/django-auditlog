@@ -8,7 +8,6 @@ from django.contrib.auth.models import AnonymousUser
 from django.db.models.signals import pre_save
 from django.utils.functional import curry, SimpleLazyObject
 from django.apps import apps
-from re import sub
 
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
