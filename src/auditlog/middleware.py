@@ -28,8 +28,9 @@ threadlocal = threading.local()
 def get_token_user(request):
     user = None
     try:
-        user = TokenAuthentication().authenticate(Request(request))
-        user = user[0]
+        token_user = TokenAuthentication().authenticate(Request(request))
+        if token_user:
+            user = token_user[0]
     except Token.DoesNotExist:
         pass
     return user or AnonymousUser()
