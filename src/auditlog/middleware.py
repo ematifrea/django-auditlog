@@ -4,9 +4,16 @@ import threading
 import time
 
 from django.conf import settings
+from django.contrib.auth.models import AnonymousUser
 from django.db.models.signals import pre_save
-from django.utils.functional import curry
+from django.utils.functional import curry, SimpleLazyObject
 from django.apps import apps
+from re import sub
+
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.authtoken.models import Token
+from rest_framework.request import Request
+
 from auditlog.models import LogEntry
 
 # Use MiddlewareMixin when present (Django >= 1.10)
@@ -17,6 +24,16 @@ except ImportError:
 
 
 threadlocal = threading.local()
+
+
+def get_token_user(request):
+    user = None
+    try:
+        user = TokenAuthentication().authenticate(Request(request))
+        user = user[0]
+    except Token.DoesNotExist:
+        pass
+    return user or AnonymousUser()
 
 
 class AuditlogMiddleware(MiddlewareMixin):
@@ -35,12 +52,12 @@ class AuditlogMiddleware(MiddlewareMixin):
             'signal_duid': (self.__class__, time.time()),
             'remote_addr': request.META.get('REMOTE_ADDR'),
         }
-
+        request.user = SimpleLazyObject(lambda: get_token_user(request))
         # In case of proxy, set 'original' address
         if request.META.get('HTTP_X_FORWARDED_FOR'):
             threadlocal.auditlog['remote_addr'] = request.META.get('HTTP_X_FORWARDED_FOR').split(',')[0]
-
         # Connect signal for automatic logging
+
         if hasattr(request, 'user') and hasattr(request.user, 'is_authenticated') and request.user.is_authenticated():
             set_actor = curry(self.set_actor, user=request.user, signal_duid=threadlocal.auditlog['signal_duid'])
             pre_save.connect(set_actor, sender=LogEntry, dispatch_uid=threadlocal.auditlog['signal_duid'], weak=False)
