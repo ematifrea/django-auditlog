@@ -52,7 +52,8 @@ class AuditlogMiddleware(MiddlewareMixin):
             'signal_duid': (self.__class__, time.time()),
             'remote_addr': request.META.get('REMOTE_ADDR'),
         }
-        request.user = SimpleLazyObject(lambda: get_token_user(request))
+        if not request.user.is_authenticated():
+            request.user = SimpleLazyObject(lambda: get_token_user(request))
         # In case of proxy, set 'original' address
         if request.META.get('HTTP_X_FORWARDED_FOR'):
             threadlocal.auditlog['remote_addr'] = request.META.get('HTTP_X_FORWARDED_FOR').split(',')[0]
