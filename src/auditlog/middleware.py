@@ -10,7 +10,7 @@ from django.utils.functional import curry, SimpleLazyObject
 from django.apps import apps
 
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.authtoken.models import Token
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.request import Request
 
 from auditlog.models import LogEntry
@@ -31,7 +31,7 @@ def get_token_user(request):
         token_user = TokenAuthentication().authenticate(Request(request))
         if token_user:
             user = token_user[0]
-    except Token.DoesNotExist:
+    except AuthenticationFailed:
         pass
     return user or AnonymousUser()
 
